@@ -1,0 +1,8 @@
+
+{
+  "name": "NexusMind - The Problem Solving Network",
+  "description": "A Facebook-inspired social platform focused on sharing and solving challenges through community collaboration.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

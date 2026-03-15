@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Persistence Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>NexusMind Authentication Persistence Test</h1>
+    
+    <div class="test-section info">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open the main NexusMind application in a new tab</li>
+            <li>Log in with your credentials</li>
+            <li>Refresh the browser or close and reopen the tab</li>
+            <li>You should remain logged in</li>
+            <li>Use the buttons below to check localStorage state</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Controls:</h3>
+        <button onclick="checkLocalStorage()">Check LocalStorage</button>
+        <button onclick="clearAllData()">Clear All Data (for testing)</button>
+        <button onclick="checkFirebaseAuth()">Check Firebase Auth State</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLWdQRbcSKJp8oRDotNgc4gFuGxoIWcGM",
+            authDomain: "nexusmind-e2d8a.firebaseapp.com",
+            projectId: "nexusmind-e2d8a",
+            storageBucket: "nexusmind-e2d8a.firebasestorage.app",
+            messagingSenderId: "481494377000",
+            appId: "1:481494377000:web:e16da870009dae226e0b1d",
+            measurementId: "G-KKYFVQ99BW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.checkLocalStorage = function() {
+            const results = document.getElementById('results');
+            const userCache = localStorage.getItem('nexusmind_user_cache');
+            const posts = localStorage.getItem('nexus_posts');
+            
+            let html = '<div class="test-section info"><h3>LocalStorage Contents:</h3>';
+            
+            if (userCache) {
+                try {
+                    const user = JSON.parse(userCache);
+                    html += `<div class="success">✓ User cache found: ${user.name} (${user.email})</div>`;
+                    html += `<pre>${JSON.stringify(user, null, 2)}</pre>`;
+                } catch (e) {
+                    html += `<div class="error">✗ Invalid user cache format</div>`;
+                }
+            } else {
+                html += `<div class="error">✗ No user cache found</div>`;
+            }
+            
+            if (posts) {
+                try {
+                    const postsData = JSON.parse(posts);
+                    html += `<div class="success">✓ Posts cache found: ${postsData.length} posts</div>`;
+                } catch (e) {
+                    html += `<div class="error">✗ Invalid posts cache format</div>`;
+                }
+            } else {
+                html += `<div class="error">✗ No posts cache found</div>`;
+            }
+            
+            html += '</div>';
+            results.innerHTML = html;
+        };
+
+        window.clearAllData = function() {
+            localStorage.removeItem('nexusmind_user_cache');
+            localStorage.removeItem('nexus_posts');
+            document.getElementById('results').innerHTML = '<div class="test-section info">All localStorage data cleared. Refresh the main app to test login persistence.</div>';
+        };
+
+        window.checkFirebaseAuth = function() {
+            const results = document.getElementById('results');
+            
+            onAuthStateChanged(auth, (user) => {
+                let html = '<div class="test-section info"><h3>Firebase Auth State:</h3>';
+                
+                if (user) {
+                    html += `<div class="success">✓ User is authenticated: ${user.email} (UID: ${user.uid})</div>`;
+                    html += `<pre>${JSON.stringify({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        emailVerified: user.emailVerified,
+                        isAnonymous: user.isAnonymous
+                    }, null, 2)}</pre>`;
+                } else {
+                    html += `<div class="error">✗ No authenticated user found</div>`;
+                }
+                
+                html += '</div>';
+                results.innerHTML = html;
+            });
+        };
+
+        // Auto-check on load
+        setTimeout(() => {
+            checkLocalStorage();
+            checkFirebaseAuth();
+        }, 1000);
+    </script>
+</body>
+</html>
